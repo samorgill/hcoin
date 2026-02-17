@@ -305,12 +305,12 @@
     </div>
 
     <div class="code-lab">
-      <div class="code-title">Code Lab</div>
+      <div class="code-title">Coding Corner</div>
       <div class="code-help">
         Type one setting per line, then press <b>Run Code</b>.<br>
         Example: <code>gravity = 0.35;</code> or <code>jumpPower = 12.2;</code>
       </div>
-      <textarea id="fauxCodeInput" class="code-input" spellcheck="false" aria-label="Faux code settings input"></textarea>
+      <textarea id="fauxCodeInput" class="code-input" spellcheck="false" aria-label="Code settings input"></textarea>
       <div class="code-actions">
         <button class="code-run-btn" id="runCodeBtn" type="button">Run Code</button>
         <button class="code-reset-btn" id="resetCodeBtn" type="button">Reset Defaults</button>
@@ -502,7 +502,7 @@
 
     function buildFauxCodeTemplate() {
       return [
-        "// Change these numbers, then press Run Faux Code",
+        "// Change these numbers, then press Run Code",
         `playerSpeed = ${formatNumber(SETTINGS.playerSpeed, 2)};`,
         `jumpPower = ${formatNumber(SETTINGS.jumpPower, 2)};`,
         `gravity = ${formatNumber(SETTINGS.gravity, 2)};`,
@@ -584,7 +584,7 @@
       }
 
       setCodeStatus(`Applied: ${changedKeys.join(", ")}`, "success");
-      setMessage("New settings loaded from Faux Code Lab.");
+      setMessage("New settings loaded from Harrison's Coding Corner.");
     }
 
     function resetFauxCodeDefaults() {
@@ -1050,7 +1050,7 @@
     });
 
     fauxCodeInputEl.value = buildFauxCodeTemplate();
-    setCodeStatus("Tip: change gravity, then press Run Faux Code.");
+    setCodeStatus("Tip: change gravity, then press Run Code.");
     resetRun(true);
     requestAnimationFrame(update);
   </script>
