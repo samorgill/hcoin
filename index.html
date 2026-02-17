@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Harrison's Coin Run</title>
+  <style>
+    :root {
+      --sky: #e6f7ff;
+      --panel: #ffffff;
+      --text: #11324a;
+      --accent: #00a2ff;
+      --accent-2: #00c96d;
+      --danger: #ff5c5c;
+      --shadow: 0 12px 28px rgba(17, 50, 74, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Trebuchet MS", "Comic Sans MS", "Segoe UI", sans-serif;
+      background: radial-gradient(circle at 30% 20%, #f8feff 0%, var(--sky) 60%, #cae8ff 100%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .game-wrap {
+      width: min(1000px, 100%);
+      background: var(--panel);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      border: 2px solid #b5e4ff;
+    }
+
+    .top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 2px solid #d7eefc;
+      background: linear-gradient(90deg, #ffffff, #f1fbff);
+    }
+
+    .title {
+      font-size: clamp(1rem, 2vw, 1.35rem);
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+
+    .stats {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .chip {
+      background: #e9f7ff;
+      border: 1px solid #b8e4ff;
+      border-radius: 999px;
+      padding: 6px 10px;
+      min-width: 92px;
+      text-align: center;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      width: 100%;
+      background: linear-gradient(180deg, #d9f2ff 0%, #f4fbff 100%);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      touch-action: none;
+    }
+
+    .message-row {
+      padding: 10px 16px 12px;
+      background: #f8fdff;
+      border-top: 2px solid #d7eefc;
+    }
+
+    .message {
+      background: rgba(255, 255, 255, 0.9);
+      border: 2px solid #b7e2ff;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      line-height: 1.35;
+      font-weight: 700;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px 16px;
+      border-top: 2px solid #d7eefc;
+      background: #fbfeff;
+      flex-wrap: wrap;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 8px 14px rgba(0, 0, 0, 0.15);
+      user-select: none;
+    }
+
+    .move-btn {
+      background: linear-gradient(180deg, #00a8ff, #0077cc);
+      min-width: 78px;
+    }
+
+    .jump-btn {
+      background: linear-gradient(180deg, #00c96d, #029f57);
+      min-width: 92px;
+    }
+
+    .restart-btn {
+      background: linear-gradient(180deg, #ff8f32, #ff6b00);
+    }
+
+    .help {
+      font-size: 0.86rem;
+      line-height: 1.3;
+      opacity: 0.9;
+      max-width: 380px;
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 10px;
+      }
+
+      .controls {
+        justify-content: center;
+      }
+
+      .help {
+        text-align: center;
+      }
+
+      .chip {
+        min-width: 84px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-wrap">
+    <div class="top">
+      <div class="title">Harrison's Coin Run</div>
+      <div class="stats">
+        <div class="chip" id="coins">Coins: 0 / 0</div>
+        <div class="chip" id="lives">Lives: 0</div>
+        <div class="chip" id="timer">Time: 0.0s</div>
+      </div>
+    </div>
+
+    <div class="canvas-wrap">
+      <canvas id="game" width="960" height="540" aria-label="Obby game canvas"></canvas>
+    </div>
+
+    <div class="message-row">
+      <div class="message" id="message">Keyboard: Arrow Keys or A/D move, Space/W jumps. iPad: swipe left/right to move, swipe up or tap to jump. Grab all coins, then touch the green finish block.</div>
+    </div>
+
+    <div class="controls">
+      <div class="buttons">
+        <button class="move-btn" id="leftBtn" type="button">Left</button>
+        <button class="move-btn" id="rightBtn" type="button">Right</button>
+        <button class="jump-btn" id="jumpBtn" type="button">Jump</button>
+        <button class="restart-btn" id="restartBtn" type="button">Restart</button>
+      </div>
+      <div class="help">
+        Edit this game by changing <code>SETTINGS</code> and <code>LEVEL</code> in this file.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==============================
+    // HARRISON EDIT ZONE (easy mode)
+    // ==============================
+    const SETTINGS = {
+      playerColor: "#2f95ff",
+      playerSpeed: 4.8,
+      jumpPower: 13.4,
+      gravity: 0.62,
+      maxFallSpeed: 15,
+      lives: 3,
+      coinColor: "#ffcc33",
+      requireAllCoinsToFinish: true,
+      touchMoveThreshold: 28,
+      touchJumpThreshold: 42,
+      touchTapJumpThreshold: 18
+    };
+
+    const LEVEL = {
+      worldWidth: 3000,
+      spawn: { x: 80, y: 430 },
+      finish: { x: 2870, y: 390, w: 58, h: 110, color: "#1db954" },
+
+      // Platforms the player can stand on.
+      // Format: { x, y, w, h, color }
+      platforms: [
+        { x: 0, y: 500, w: 520, h: 40, color: "#73d86d" },
+        { x: 620, y: 500, w: 220, h: 40, color: "#73d86d" },
+        { x: 930, y: 470, w: 170, h: 36, color: "#7ddf76" },
+        { x: 1190, y: 435, w: 180, h: 34, color: "#7ddf76" },
+        { x: 1460, y: 500, w: 250, h: 40, color: "#73d86d" },
+        { x: 1820, y: 455, w: 210, h: 35, color: "#7ddf76" },
+        { x: 2120, y: 415, w: 200, h: 32, color: "#7ddf76" },
+        { x: 2380, y: 470, w: 180, h: 36, color: "#7ddf76" },
+        { x: 2640, y: 500, w: 360, h: 40, color: "#73d86d" },
+
+        // bonus steps
+        { x: 1660, y: 390, w: 80, h: 20, color: "#9ae7ff" },
+        { x: 1745, y: 350, w: 80, h: 20, color: "#9ae7ff" }
+      ],
+
+      // Hazards: touching these costs 1 life.
+      hazards: [
+        { x: 700, y: 485, w: 60, h: 15, color: "#ff5c5c" },
+        { x: 1535, y: 485, w: 80, h: 15, color: "#ff5c5c" },
+        { x: 2175, y: 400, w: 80, h: 15, color: "#ff5c5c" },
+        { x: 2700, y: 485, w: 80, h: 15, color: "#ff5c5c" }
+      ],
+
+      // Coins to collect.
+      coins: [
+        { x: 220, y: 445 },
+        { x: 675, y: 440 },
+        { x: 980, y: 410 },
+        { x: 1260, y: 375 },
+        { x: 1540, y: 445 },
+        { x: 1865, y: 400 },
+        { x: 2165, y: 360 },
+        { x: 2695, y: 445 }
+      ]
+    };
+    // ==============================
+
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const messageEl = document.getElementById("message");
+    const coinsEl = document.getElementById("coins");
+    const livesEl = document.getElementById("lives");
+    const timerEl = document.getElementById("timer");
+
+    const controls = {
+      left: false,
+      right: false,
+      jump: false
+    };
+
+    const DEFAULT_MESSAGE = "Keyboard: Arrow Keys or A/D move, Space/W jumps. iPad: swipe left/right to move, swipe up or tap to jump. Grab all coins, then touch the green finish block.";
+
+    const touchGesture = {
+      active: false,
+      startX: 0,
+      startY: 0,
+      lastX: 0,
+      lastY: 0,
+      jumpTriggered: false,
+      movedSideways: false
+    };
+
+    const player = {
+      x: LEVEL.spawn.x,
+      y: LEVEL.spawn.y,
+      w: 34,
+      h: 44,
+      vx: 0,
+      vy: 0,
+      onGround: false,
+      lives: SETTINGS.lives
+    };
+
+    const game = {
+      running: true,
+      won: false,
+      lost: false,
+      startTime: performance.now(),
+      elapsed: 0,
+      cameraX: 0,
+      jumpQueued: false,
+      collected: 0,
+      totalCoins: LEVEL.coins.length,
+      coins: LEVEL.coins.map((coin) => ({ ...coin, collected: false }))
+    };
+
+    function resetRun(fullResetLives = true) {
+      player.x = LEVEL.spawn.x;
+      player.y = LEVEL.spawn.y;
+      player.vx = 0;
+      player.vy = 0;
+      player.onGround = false;
+
+      if (fullResetLives) {
+        player.lives = SETTINGS.lives;
+      }
+
+      game.running = true;
+      game.won = false;
+      game.lost = false;
+      game.startTime = performance.now();
+      game.elapsed = 0;
+      game.cameraX = 0;
+      game.jumpQueued = false;
+      game.collected = 0;
+      game.coins = LEVEL.coins.map((coin) => ({ ...coin, collected: false }));
+      setMessage(DEFAULT_MESSAGE);
+      updateHud();
+    }
+
+    function setMessage(text) {
+      messageEl.textContent = text;
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function intersects(a, b) {
+      return (
+        a.x < b.x + b.w &&
+        a.x + a.w > b.x &&
+        a.y < b.y + b.h &&
+        a.y + a.h > b.y
+      );
+    }
+
+    function queueJump() {
+      controls.jump = true;
+      game.jumpQueued = true;
+    }
+
+    function releaseHorizontalTouchMotion() {
+      controls.left = false;
+      controls.right = false;
+    }
+
+    function startTouchGesture(clientX, clientY) {
+      touchGesture.active = true;
+      touchGesture.startX = clientX;
+      touchGesture.startY = clientY;
+      touchGesture.lastX = clientX;
+      touchGesture.lastY = clientY;
+      touchGesture.jumpTriggered = false;
+      touchGesture.movedSideways = false;
+    }
+
+    function moveTouchGesture(clientX, clientY) {
+      if (!touchGesture.active) {
+        return;
+      }
+
+      touchGesture.lastX = clientX;
+      touchGesture.lastY = clientY;
+
+      const dx = clientX - touchGesture.startX;
+      const dy = clientY - touchGesture.startY;
+      const absX = Math.abs(dx);
+      const absY = Math.abs(dy);
+
+      if (!touchGesture.jumpTriggered && dy <= -SETTINGS.touchJumpThreshold && absY >= absX) {
+        queueJump();
+        touchGesture.jumpTriggered = true;
+      }
+
+      if (absX >= SETTINGS.touchMoveThreshold && absX > absY) {
+        controls.left = dx < 0;
+        controls.right = dx > 0;
+        touchGesture.movedSideways = true;
+        return;
+      }
+
+      if (absX <= SETTINGS.touchTapJumpThreshold) {
+        releaseHorizontalTouchMotion();
+      }
+    }
+
+    function endTouchGesture() {
+      if (!touchGesture.active) {
+        return;
+      }
+
+      const totalDx = touchGesture.lastX - touchGesture.startX;
+      const totalDy = touchGesture.lastY - touchGesture.startY;
+      const totalDistance = Math.hypot(totalDx, totalDy);
+
+      if (!touchGesture.jumpTriggered && !touchGesture.movedSideways && totalDistance <= SETTINGS.touchTapJumpThreshold) {
+        queueJump();
+      }
+
+      touchGesture.active = false;
+      touchGesture.jumpTriggered = false;
+      touchGesture.movedSideways = false;
+      releaseHorizontalTouchMotion();
+    }
+
+    function loseLife(reasonText) {
+      if (!game.running) {
+        return;
+      }
+
+      player.lives -= 1;
+
+      if (player.lives <= 0) {
+        game.running = false;
+        game.lost = true;
+        setMessage("Game over. Press Restart or R to try again.");
+        return;
+      }
+
+      setMessage(`${reasonText} Lives left: ${player.lives}`);
+      player.x = LEVEL.spawn.x;
+      player.y = LEVEL.spawn.y;
+      player.vx = 0;
+      player.vy = 0;
+      player.onGround = false;
+      game.cameraX = 0;
+    }
+
+    function handleInput() {
+      const moveAxis = (controls.right ? 1 : 0) - (controls.left ? 1 : 0);
+      player.vx = moveAxis * SETTINGS.playerSpeed;
+
+      if (game.jumpQueued && player.onGround) {
+        player.vy = -SETTINGS.jumpPower;
+        player.onGround = false;
+      }
+
+      game.jumpQueued = false;
+      controls.jump = false;
+    }
+
+    function movePlayer() {
+      player.vy += SETTINGS.gravity;
+      player.vy = Math.min(player.vy, SETTINGS.maxFallSpeed);
+
+      player.x += player.vx;
+      for (const p of LEVEL.platforms) {
+        if (!intersects(player, p)) {
+          continue;
+        }
+
+        if (player.vx > 0) {
+          player.x = p.x - player.w;
+        } else if (player.vx < 0) {
+          player.x = p.x + p.w;
+        }
+      }
+
+      player.x = clamp(player.x, 0, LEVEL.worldWidth - player.w);
+
+      player.y += player.vy;
+      player.onGround = false;
+
+      for (const p of LEVEL.platforms) {
+        if (!intersects(player, p)) {
+          continue;
+        }
+
+        if (player.vy > 0) {
+          player.y = p.y - player.h;
+          player.vy = 0;
+          player.onGround = true;
+        } else if (player.vy < 0) {
+          player.y = p.y + p.h;
+          player.vy = 0;
+        }
+      }
+
+      if (player.y > canvas.height + 220) {
+        loseLife("You fell!");
+      }
+    }
+
+    function collectCoins() {
+      for (const coin of game.coins) {
+        if (coin.collected) {
+          continue;
+        }
+
+        const coinBox = { x: coin.x - 10, y: coin.y - 10, w: 20, h: 20 };
+        if (intersects(player, coinBox)) {
+          coin.collected = true;
+          game.collected += 1;
+        }
+      }
+    }
+
+    function hitHazards() {
+      for (const hz of LEVEL.hazards) {
+        if (intersects(player, hz)) {
+          loseLife("Ouch! You touched lava.");
+          return;
+        }
+      }
+    }
+
+    function checkFinish() {
+      if (!intersects(player, LEVEL.finish)) {
+        return;
+      }
+
+      const ready = SETTINGS.requireAllCoinsToFinish ? game.collected === game.totalCoins : true;
+
+      if (!ready) {
+        const left = game.totalCoins - game.collected;
+        setMessage(`Collect ${left} more coin${left === 1 ? "" : "s"} to finish.`);
+        return;
+      }
+
+      game.running = false;
+      game.won = true;
+      setMessage("You won! Press Restart or R to play again.");
+    }
+
+    function updateHud() {
+      const time = game.elapsed.toFixed(1);
+      coinsEl.textContent = `Coins: ${game.collected} / ${game.totalCoins}`;
+      livesEl.textContent = `Lives: ${player.lives}`;
+      timerEl.textContent = `Time: ${time}s`;
+    }
+
+    function drawBackground() {
+      const x = -game.cameraX;
+
+      ctx.fillStyle = "#d9f2ff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#c2ecff";
+      for (let i = 0; i < 18; i += 1) {
+        const hillX = (i * 220 + x * 0.2) % (LEVEL.worldWidth + 300);
+        const offsetX = hillX < 0 ? hillX + LEVEL.worldWidth + 300 : hillX;
+        ctx.beginPath();
+        ctx.arc(offsetX - 120, canvas.height + 50, 220, Math.PI, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = "#a5dfff";
+      for (let i = 0; i < 16; i += 1) {
+        const cloudX = (i * 260 + x * 0.12) % (LEVEL.worldWidth + 260);
+        const offsetX = cloudX < 0 ? cloudX + LEVEL.worldWidth + 260 : cloudX;
+        const cloudY = 70 + (i % 5) * 24;
+
+        ctx.beginPath();
+        ctx.arc(offsetX, cloudY, 20, 0, Math.PI * 2);
+        ctx.arc(offsetX + 20, cloudY - 8, 17, 0, Math.PI * 2);
+        ctx.arc(offsetX + 40, cloudY, 20, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawWorld() {
+      const offsetX = game.cameraX;
+
+      // finish block
+      ctx.fillStyle = LEVEL.finish.color;
+      ctx.fillRect(LEVEL.finish.x - offsetX, LEVEL.finish.y, LEVEL.finish.w, LEVEL.finish.h);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "700 14px Trebuchet MS";
+      ctx.fillText("FINISH", LEVEL.finish.x - offsetX + 4, LEVEL.finish.y - 8);
+
+      // platforms
+      for (const p of LEVEL.platforms) {
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x - offsetX, p.y, p.w, p.h);
+
+        ctx.fillStyle = "rgba(255,255,255,0.25)";
+        ctx.fillRect(p.x - offsetX, p.y, p.w, 5);
+      }
+
+      // hazards
+      for (const hz of LEVEL.hazards) {
+        ctx.fillStyle = hz.color;
+        ctx.fillRect(hz.x - offsetX, hz.y, hz.w, hz.h);
+
+        ctx.fillStyle = "#ffd4d4";
+        for (let i = 0; i < hz.w; i += 12) {
+          ctx.fillRect(hz.x - offsetX + i, hz.y, 6, 5);
+        }
+      }
+
+      // coins
+      for (const coin of game.coins) {
+        if (coin.collected) {
+          continue;
+        }
+
+        ctx.beginPath();
+        ctx.fillStyle = SETTINGS.coinColor;
+        ctx.arc(coin.x - offsetX, coin.y, 10, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.fillStyle = "#ffe89b";
+        ctx.arc(coin.x - offsetX - 2, coin.y - 2, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // player
+      ctx.fillStyle = SETTINGS.playerColor;
+      ctx.fillRect(player.x - offsetX, player.y, player.w, player.h);
+
+      ctx.fillStyle = "rgba(255,255,255,0.35)";
+      ctx.fillRect(player.x - offsetX + 4, player.y + 4, player.w - 8, 8);
+    }
+
+    function update(now) {
+      if (game.running) {
+        handleInput();
+        movePlayer();
+        collectCoins();
+        hitHazards();
+        checkFinish();
+
+        game.elapsed = (now - game.startTime) / 1000;
+      }
+
+      game.cameraX = clamp(player.x - canvas.width * 0.35, 0, LEVEL.worldWidth - canvas.width);
+
+      drawBackground();
+      drawWorld();
+      updateHud();
+
+      requestAnimationFrame(update);
+    }
+
+    function onKeyChange(event, value) {
+      const code = event.code;
+
+      if (code === "ArrowLeft" || code === "KeyA") {
+        controls.left = value;
+      }
+
+      if (code === "ArrowRight" || code === "KeyD") {
+        controls.right = value;
+      }
+
+      if ((code === "ArrowUp" || code === "KeyW" || code === "Space") && value) {
+        queueJump();
+      }
+
+      if ((code === "KeyR") && value) {
+        resetRun(true);
+      }
+    }
+
+    window.addEventListener("keydown", (event) => {
+      onKeyChange(event, true);
+    });
+
+    window.addEventListener("keyup", (event) => {
+      onKeyChange(event, false);
+    });
+
+    canvas.addEventListener("touchstart", (event) => {
+      if (event.touches.length === 0) {
+        return;
+      }
+
+      event.preventDefault();
+      const touch = event.touches[0];
+      startTouchGesture(touch.clientX, touch.clientY);
+    }, { passive: false });
+
+    canvas.addEventListener("touchmove", (event) => {
+      if (!touchGesture.active || event.touches.length === 0) {
+        return;
+      }
+
+      event.preventDefault();
+      const touch = event.touches[0];
+      moveTouchGesture(touch.clientX, touch.clientY);
+    }, { passive: false });
+
+    canvas.addEventListener("touchend", (event) => {
+      if (!touchGesture.active) {
+        return;
+      }
+
+      event.preventDefault();
+      const touch = event.changedTouches[0];
+      if (touch) {
+        touchGesture.lastX = touch.clientX;
+        touchGesture.lastY = touch.clientY;
+      }
+      endTouchGesture();
+    }, { passive: false });
+
+    canvas.addEventListener("touchcancel", (event) => {
+      event.preventDefault();
+      endTouchGesture();
+    }, { passive: false });
+
+    function bindHoldButton(element, onPress, onRelease = onPress) {
+      const start = (event) => {
+        event.preventDefault();
+        onPress(true);
+      };
+
+      const end = (event) => {
+        event.preventDefault();
+        onRelease(false);
+      };
+
+      element.addEventListener("pointerdown", start);
+      element.addEventListener("pointerup", end);
+      element.addEventListener("pointerleave", end);
+      element.addEventListener("pointercancel", end);
+      element.addEventListener("touchstart", start, { passive: false });
+      element.addEventListener("touchend", end, { passive: false });
+    }
+
+    bindHoldButton(document.getElementById("leftBtn"), (pressed) => {
+      controls.left = pressed;
+    });
+
+    bindHoldButton(document.getElementById("rightBtn"), (pressed) => {
+      controls.right = pressed;
+    });
+
+    bindHoldButton(
+      document.getElementById("jumpBtn"),
+      (pressed) => {
+        if (pressed) {
+          queueJump();
+        }
+      },
+      () => {
+        controls.jump = false;
+      }
+    );
+
+    document.getElementById("restartBtn").addEventListener("click", () => {
+      resetRun(true);
+    });
+
+    resetRun(true);
+    requestAnimationFrame(update);
+  </script>
+</body>
+</html>
