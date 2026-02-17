@@ -9,6 +9,13 @@ A tiny obby platformer you can run in a browser.
 4. You can also use the on-screen `Left`, `Right`, and `Jump` buttons on touch devices.
 5. Collect all coins, then touch the green finish block.
 
+## Faux Code Lab (in the game UI)
+Harrison can tweak gameplay without opening code files:
+- Scroll below the controls to `Faux Code Lab`.
+- Type lines like `gravity = 0.35;` or `jumpPower = 12.2;`
+- Press `Run Faux Code`.
+- Press `Reset Defaults` to return to starting values.
+
 ## Let Harrison edit it
 Open `/Users/samorgill/projects/hdogg/index.html` and find:
 - `SETTINGS` (near the top of the `<script>`)

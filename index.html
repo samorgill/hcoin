@@ -173,6 +173,83 @@
       max-width: 380px;
     }
 
+    .code-lab {
+      border-top: 4px solid #87cfff;
+      background: #e8f7ff;
+      padding: 14px 16px 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .code-title {
+      font-size: 0.95rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .code-help {
+      font-size: 0.8rem;
+      line-height: 1.35;
+      opacity: 0.9;
+      font-family: "Trebuchet MS", "Arial", sans-serif;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .code-input {
+      width: 100%;
+      min-height: 124px;
+      resize: vertical;
+      border: 3px solid #2991d4;
+      border-radius: 2px;
+      padding: 10px 12px;
+      background: #ffffff;
+      color: #0d3552;
+      font-size: 0.92rem;
+      line-height: 1.4;
+      font-family: "Courier New", monospace;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .code-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .code-run-btn {
+      background: #0c9af3;
+    }
+
+    .code-reset-btn {
+      background: #5f7387;
+    }
+
+    .code-status {
+      border: 3px solid #62b8ef;
+      background: #ffffff;
+      padding: 8px 10px;
+      border-radius: 2px;
+      font-size: 0.8rem;
+      font-family: "Trebuchet MS", "Arial", sans-serif;
+      font-weight: 700;
+      text-transform: none;
+      letter-spacing: 0;
+      line-height: 1.3;
+    }
+
+    .code-status.status-success {
+      border-color: #22a85d;
+      color: #0e6a38;
+    }
+
+    .code-status.status-error {
+      border-color: #d34949;
+      color: #8a1d1d;
+    }
+
     @media (max-width: 720px) {
       body {
         padding: 10px;
@@ -188,6 +265,10 @@
 
       .chip {
         min-width: 84px;
+      }
+
+      .code-actions {
+        justify-content: center;
       }
     }
   </style>
@@ -219,8 +300,22 @@
         <button class="restart-btn" id="restartBtn" type="button">Restart</button>
       </div>
       <div class="help">
-        Edit this game by changing <code>SETTINGS</code> and <code>LEVEL</code> in this file.
+        Use Code Lab below or edit <code>SETTINGS</code> and <code>LEVEL</code> in this file.
       </div>
+    </div>
+
+    <div class="code-lab">
+      <div class="code-title">Code Lab</div>
+      <div class="code-help">
+        Type one setting per line, then press <b>Run Faux Code</b>.<br>
+        Example: <code>gravity = 0.35;</code> or <code>jumpPower = 12.2;</code>
+      </div>
+      <textarea id="fauxCodeInput" class="code-input" spellcheck="false" aria-label="Faux code settings input"></textarea>
+      <div class="code-actions">
+        <button class="code-run-btn" id="runCodeBtn" type="button">Run Faux Code</button>
+        <button class="code-reset-btn" id="resetCodeBtn" type="button">Reset Defaults</button>
+      </div>
+      <div class="code-status" id="codeStatus">Try: gravity = 0.35;</div>
     </div>
   </div>
 
@@ -231,9 +326,10 @@
     const SETTINGS = {
       playerColor: "#2f95ff",
       playerSpeed: 4.8,
-      jumpPower: 13.4,
-      gravity: 0.62,
-      maxFallSpeed: 15,
+      // Floatier jump: more airtime, slower fall.
+      jumpPower: 11.6,
+      gravity: 0.3,
+      maxFallSpeed: 7.8,
       lives: 3,
       coinColor: "#ffcc33",
       requireAllCoinsToFinish: true,
@@ -241,6 +337,7 @@
       touchJumpThreshold: 42,
       touchTapJumpThreshold: 18
     };
+    const DEFAULT_SETTINGS = { ...SETTINGS };
 
     const LEVEL = {
       worldWidth: 3000,
@@ -296,6 +393,8 @@
     const coinsEl = document.getElementById("coins");
     const livesEl = document.getElementById("lives");
     const timerEl = document.getElementById("timer");
+    const fauxCodeInputEl = document.getElementById("fauxCodeInput");
+    const codeStatusEl = document.getElementById("codeStatus");
 
     const controls = {
       left: false,
@@ -313,6 +412,17 @@
       lastY: 0,
       jumpTriggered: false,
       movedSideways: false
+    };
+
+    const FAUX_CODE_RULES = {
+      playerSpeed: { min: 2, max: 10, decimals: 2 },
+      jumpPower: { min: 7, max: 18, decimals: 2 },
+      gravity: { min: 0.2, max: 0.8, decimals: 2 },
+      maxFallSpeed: { min: 6, max: 18, decimals: 2 },
+      lives: { min: 1, max: 9, decimals: 0 },
+      touchMoveThreshold: { min: 10, max: 90, decimals: 0 },
+      touchJumpThreshold: { min: 20, max: 120, decimals: 0 },
+      touchTapJumpThreshold: { min: 8, max: 40, decimals: 0 }
     };
 
     const player = {
@@ -369,6 +479,121 @@
 
     function clamp(value, min, max) {
       return Math.max(min, Math.min(max, value));
+    }
+
+    function formatNumber(value, decimals) {
+      if (decimals <= 0) {
+        return String(Math.round(value));
+      }
+
+      return Number(value).toFixed(decimals).replace(/\.?0+$/, "");
+    }
+
+    function setCodeStatus(text, type = "info") {
+      codeStatusEl.textContent = text;
+      codeStatusEl.classList.remove("status-success", "status-error");
+      if (type === "success") {
+        codeStatusEl.classList.add("status-success");
+      }
+      if (type === "error") {
+        codeStatusEl.classList.add("status-error");
+      }
+    }
+
+    function buildFauxCodeTemplate() {
+      return [
+        "// Change these numbers, then press Run Faux Code",
+        `playerSpeed = ${formatNumber(SETTINGS.playerSpeed, 2)};`,
+        `jumpPower = ${formatNumber(SETTINGS.jumpPower, 2)};`,
+        `gravity = ${formatNumber(SETTINGS.gravity, 2)};`,
+        `maxFallSpeed = ${formatNumber(SETTINGS.maxFallSpeed, 2)};`,
+        `lives = ${formatNumber(SETTINGS.lives, 0)};`
+      ].join("\n");
+    }
+
+    function normalizeSettingKey(rawKey) {
+      const lowerRawKey = rawKey.toLowerCase();
+      return Object.keys(FAUX_CODE_RULES).find((key) => key.toLowerCase() === lowerRawKey) || null;
+    }
+
+    function applyFauxCode() {
+      const lines = fauxCodeInputEl.value.split(/\r?\n/);
+      const nextValues = {};
+      const changedKeys = [];
+
+      for (let index = 0; index < lines.length; index += 1) {
+        const rawLine = lines[index];
+        const line = rawLine.replace(/\/\/.*$/, "").trim();
+        if (!line) {
+          continue;
+        }
+
+        const match = line.match(/^(?:set\s+)?([a-zA-Z][a-zA-Z0-9_]*)\s*(?:=|:)\s*([-+]?\d*\.?\d+)\s*;?$/i);
+        if (!match) {
+          setCodeStatus(`Line ${index + 1}: use format like gravity = 0.35;`, "error");
+          return;
+        }
+
+        const parsedKey = normalizeSettingKey(match[1]);
+        if (!parsedKey) {
+          setCodeStatus(`Line ${index + 1}: "${match[1]}" is not editable here.`, "error");
+          return;
+        }
+
+        const numericValue = Number(match[2]);
+        if (!Number.isFinite(numericValue)) {
+          setCodeStatus(`Line ${index + 1}: "${match[2]}" is not a valid number.`, "error");
+          return;
+        }
+
+        const rules = FAUX_CODE_RULES[parsedKey];
+        let safeValue = clamp(numericValue, rules.min, rules.max);
+        if (rules.decimals === 0) {
+          safeValue = Math.round(safeValue);
+        } else {
+          const multiplier = 10 ** rules.decimals;
+          safeValue = Math.round(safeValue * multiplier) / multiplier;
+        }
+
+        nextValues[parsedKey] = safeValue;
+      }
+
+      const keys = Object.keys(nextValues);
+      if (!keys.length) {
+        setCodeStatus("No changes found. Try: gravity = 0.35;", "error");
+        return;
+      }
+
+      for (const key of keys) {
+        if (SETTINGS[key] !== nextValues[key]) {
+          changedKeys.push(key);
+        }
+        SETTINGS[key] = nextValues[key];
+      }
+
+      if (changedKeys.includes("lives")) {
+        player.lives = clamp(player.lives, 1, SETTINGS.lives);
+      }
+
+      fauxCodeInputEl.value = buildFauxCodeTemplate();
+      updateHud();
+
+      if (!changedKeys.length) {
+        setCodeStatus("Values are already set like that.", "success");
+        return;
+      }
+
+      setCodeStatus(`Applied: ${changedKeys.join(", ")}`, "success");
+      setMessage("New settings loaded from Faux Code Lab.");
+    }
+
+    function resetFauxCodeDefaults() {
+      Object.assign(SETTINGS, DEFAULT_SETTINGS);
+      player.lives = clamp(player.lives, 1, SETTINGS.lives);
+      fauxCodeInputEl.value = buildFauxCodeTemplate();
+      updateHud();
+      setCodeStatus("Reset to default settings.", "success");
+      setMessage(DEFAULT_MESSAGE);
     }
 
     function intersects(a, b) {
@@ -809,6 +1034,23 @@
       resetRun(true);
     });
 
+    document.getElementById("runCodeBtn").addEventListener("click", () => {
+      applyFauxCode();
+    });
+
+    document.getElementById("resetCodeBtn").addEventListener("click", () => {
+      resetFauxCodeDefaults();
+    });
+
+    fauxCodeInputEl.addEventListener("keydown", (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        event.preventDefault();
+        applyFauxCode();
+      }
+    });
+
+    fauxCodeInputEl.value = buildFauxCodeTemplate();
+    setCodeStatus("Tip: change gravity, then press Run Faux Code.");
     resetRun(true);
     requestAnimationFrame(update);
   </script>
