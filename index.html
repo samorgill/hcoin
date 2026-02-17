@@ -12,7 +12,7 @@
       --accent: #00a2ff;
       --accent-2: #00c96d;
       --danger: #ff5c5c;
-      --shadow: 0 12px 28px rgba(17, 50, 74, 0.14);
+      --shadow: 8px 8px 0 rgba(17, 50, 74, 0.22);
     }
 
     * {
@@ -22,8 +22,16 @@
     }
 
     body {
-      font-family: "Trebuchet MS", "Comic Sans MS", "Segoe UI", sans-serif;
-      background: radial-gradient(circle at 30% 20%, #f8feff 0%, var(--sky) 60%, #cae8ff 100%);
+      font-family: "Arial Black", "Trebuchet MS", sans-serif;
+      background:
+        repeating-linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.18) 0,
+          rgba(255, 255, 255, 0.18) 12px,
+          rgba(255, 255, 255, 0.06) 12px,
+          rgba(255, 255, 255, 0.06) 24px
+        ),
+        linear-gradient(180deg, #cae9ff 0%, #badfff 100%);
       color: var(--text);
       min-height: 100vh;
       padding: 20px;
@@ -35,10 +43,10 @@
     .game-wrap {
       width: min(1000px, 100%);
       background: var(--panel);
-      border-radius: 18px;
+      border-radius: 2px;
       box-shadow: var(--shadow);
       overflow: hidden;
-      border: 2px solid #b5e4ff;
+      border: 4px solid #2f95ff;
     }
 
     .top {
@@ -48,14 +56,15 @@
       justify-content: space-between;
       gap: 12px;
       padding: 16px 18px;
-      border-bottom: 2px solid #d7eefc;
-      background: linear-gradient(90deg, #ffffff, #f1fbff);
+      border-bottom: 4px solid #87cfff;
+      background: #e8f7ff;
     }
 
     .title {
       font-size: clamp(1rem, 2vw, 1.35rem);
       font-weight: 800;
-      letter-spacing: 0.2px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
     }
 
     .stats {
@@ -67,9 +76,9 @@
     }
 
     .chip {
-      background: #e9f7ff;
-      border: 1px solid #b8e4ff;
-      border-radius: 999px;
+      background: #d9f2ff;
+      border: 2px solid #7ac7f7;
+      border-radius: 2px;
       padding: 6px 10px;
       min-width: 92px;
       text-align: center;
@@ -78,7 +87,7 @@
     .canvas-wrap {
       position: relative;
       width: 100%;
-      background: linear-gradient(180deg, #d9f2ff 0%, #f4fbff 100%);
+      background: #d9f2ff;
     }
 
     canvas {
@@ -86,18 +95,20 @@
       width: 100%;
       height: auto;
       touch-action: none;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
     }
 
     .message-row {
       padding: 10px 16px 12px;
-      background: #f8fdff;
-      border-top: 2px solid #d7eefc;
+      background: #edf9ff;
+      border-top: 4px solid #87cfff;
     }
 
     .message {
-      background: rgba(255, 255, 255, 0.9);
-      border: 2px solid #b7e2ff;
-      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.96);
+      border: 3px solid #62b8ef;
+      border-radius: 2px;
       padding: 10px 12px;
       font-size: 0.9rem;
       line-height: 1.35;
@@ -110,7 +121,7 @@
       align-items: center;
       gap: 10px;
       padding: 14px 16px 16px;
-      border-top: 2px solid #d7eefc;
+      border-top: 4px solid #87cfff;
       background: #fbfeff;
       flex-wrap: wrap;
     }
@@ -123,29 +134,36 @@
 
     button {
       appearance: none;
-      border: 0;
-      border-radius: 12px;
+      border: 3px solid #0e4f79;
+      border-radius: 2px;
       padding: 10px 14px;
       font-size: 0.95rem;
       font-weight: 800;
       color: white;
       cursor: pointer;
-      box-shadow: 0 8px 14px rgba(0, 0, 0, 0.15);
+      box-shadow: 4px 4px 0 rgba(14, 79, 121, 0.26);
       user-select: none;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    button:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0 rgba(14, 79, 121, 0.26);
     }
 
     .move-btn {
-      background: linear-gradient(180deg, #00a8ff, #0077cc);
+      background: #0c9af3;
       min-width: 78px;
     }
 
     .jump-btn {
-      background: linear-gradient(180deg, #00c96d, #029f57);
+      background: #09bd65;
       min-width: 92px;
     }
 
     .restart-btn {
-      background: linear-gradient(180deg, #ff8f32, #ff6b00);
+      background: #ff8a1f;
     }
 
     .help {
@@ -271,6 +289,7 @@
 
     const canvas = document.getElementById("game");
     const ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = false;
 
     const messageEl = document.getElementById("message");
     const coinsEl = document.getElementById("coins");
@@ -558,29 +577,39 @@
     function drawBackground() {
       const x = -game.cameraX;
 
-      ctx.fillStyle = "#d9f2ff";
+      ctx.fillStyle = "#cdefff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.fillStyle = "#c2ecff";
-      for (let i = 0; i < 18; i += 1) {
-        const hillX = (i * 220 + x * 0.2) % (LEVEL.worldWidth + 300);
-        const offsetX = hillX < 0 ? hillX + LEVEL.worldWidth + 300 : hillX;
-        ctx.beginPath();
-        ctx.arc(offsetX - 120, canvas.height + 50, 220, Math.PI, Math.PI * 2);
-        ctx.fill();
+      // Pixel-ish sky strips.
+      ctx.fillStyle = "#bbe5ff";
+      for (let y = 0; y < canvas.height; y += 32) {
+        ctx.fillRect(0, y, canvas.width, 12);
       }
 
-      ctx.fillStyle = "#a5dfff";
-      for (let i = 0; i < 16; i += 1) {
-        const cloudX = (i * 260 + x * 0.12) % (LEVEL.worldWidth + 260);
-        const offsetX = cloudX < 0 ? cloudX + LEVEL.worldWidth + 260 : cloudX;
-        const cloudY = 70 + (i % 5) * 24;
+      // Blocky far skyline.
+      for (let i = 0; i < 18; i += 1) {
+        const blockX = (i * 210 + x * 0.2) % (LEVEL.worldWidth + 260);
+        const offsetX = blockX < 0 ? blockX + LEVEL.worldWidth + 260 : blockX;
+        const towerHeight = 90 + (i % 4) * 24;
 
-        ctx.beginPath();
-        ctx.arc(offsetX, cloudY, 20, 0, Math.PI * 2);
-        ctx.arc(offsetX + 20, cloudY - 8, 17, 0, Math.PI * 2);
-        ctx.arc(offsetX + 40, cloudY, 20, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillStyle = "#a9dcff";
+        ctx.fillRect(offsetX - 80, canvas.height - towerHeight - 60, 160, towerHeight + 60);
+
+        ctx.fillStyle = "#98d3fb";
+        ctx.fillRect(offsetX - 80, canvas.height - towerHeight - 60, 160, 12);
+      }
+
+      // Block clouds.
+      for (let i = 0; i < 12; i += 1) {
+        const cloudX = (i * 280 + x * 0.12) % (LEVEL.worldWidth + 300);
+        const offsetX = cloudX < 0 ? cloudX + LEVEL.worldWidth + 300 : cloudX;
+        const cloudY = 62 + (i % 5) * 26;
+
+        ctx.fillStyle = "#e5f6ff";
+        ctx.fillRect(offsetX, cloudY, 60, 20);
+        ctx.fillRect(offsetX + 12, cloudY - 10, 34, 10);
+        ctx.fillStyle = "#d3edff";
+        ctx.fillRect(offsetX + 20, cloudY + 20, 20, 6);
       }
     }
 
@@ -590,14 +619,20 @@
       // finish block
       ctx.fillStyle = LEVEL.finish.color;
       ctx.fillRect(LEVEL.finish.x - offsetX, LEVEL.finish.y, LEVEL.finish.w, LEVEL.finish.h);
+      ctx.strokeStyle = "#0f7f3e";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(LEVEL.finish.x - offsetX, LEVEL.finish.y, LEVEL.finish.w, LEVEL.finish.h);
       ctx.fillStyle = "#ffffff";
-      ctx.font = "700 14px Trebuchet MS";
-      ctx.fillText("FINISH", LEVEL.finish.x - offsetX + 4, LEVEL.finish.y - 8);
+      ctx.font = '900 13px "Arial Black", sans-serif';
+      ctx.fillText("FINISH", LEVEL.finish.x - offsetX + 3, LEVEL.finish.y - 8);
 
       // platforms
       for (const p of LEVEL.platforms) {
         ctx.fillStyle = p.color;
         ctx.fillRect(p.x - offsetX, p.y, p.w, p.h);
+        ctx.strokeStyle = "rgba(17, 50, 74, 0.4)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(p.x - offsetX, p.y, p.w, p.h);
 
         ctx.fillStyle = "rgba(255,255,255,0.25)";
         ctx.fillRect(p.x - offsetX, p.y, p.w, 5);
@@ -607,6 +642,9 @@
       for (const hz of LEVEL.hazards) {
         ctx.fillStyle = hz.color;
         ctx.fillRect(hz.x - offsetX, hz.y, hz.w, hz.h);
+        ctx.strokeStyle = "#c14343";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(hz.x - offsetX, hz.y, hz.w, hz.h);
 
         ctx.fillStyle = "#ffd4d4";
         for (let i = 0; i < hz.w; i += 12) {
@@ -620,20 +658,21 @@
           continue;
         }
 
-        ctx.beginPath();
         ctx.fillStyle = SETTINGS.coinColor;
-        ctx.arc(coin.x - offsetX, coin.y, 10, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.beginPath();
+        ctx.fillRect(coin.x - offsetX - 10, coin.y - 10, 20, 20);
+        ctx.strokeStyle = "#d0a200";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(coin.x - offsetX - 10, coin.y - 10, 20, 20);
         ctx.fillStyle = "#ffe89b";
-        ctx.arc(coin.x - offsetX - 2, coin.y - 2, 4, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillRect(coin.x - offsetX - 4, coin.y - 4, 8, 8);
       }
 
       // player
       ctx.fillStyle = SETTINGS.playerColor;
       ctx.fillRect(player.x - offsetX, player.y, player.w, player.h);
+      ctx.strokeStyle = "#1f6fbf";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(player.x - offsetX, player.y, player.w, player.h);
 
       ctx.fillStyle = "rgba(255,255,255,0.35)";
       ctx.fillRect(player.x - offsetX + 4, player.y + 4, player.w - 8, 8);
